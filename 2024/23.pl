@@ -4,7 +4,19 @@ use strict;
 use warnings;
 use integer;
 
-use Algorithm::Combinatorics qw(combinations);
+sub comb {
+	my $k = shift;
+	die if $k < 0 || $k > @_;
+	return [] if $k == 0;
+	my @comb;
+	while (@_ >= $k) {
+		my $a0 = shift;
+		for my $a (comb($k - 1, @_)) {
+			push @comb, [$a0, @$a];
+		}
+	}
+	@comb;
+}
 
 my $ans1 = 0;
 my $ans2 = '';
@@ -21,8 +33,7 @@ my %seen1;
 my $max = [];
 while (my ($k, $v) = each %conn) {
 	if (substr($k, 0, 1) eq 't') {
-		my $iter = combinations([keys %$v], 2);
-		while (my $p = $iter->next) {
+		for my $p (comb(2, keys %$v)) {
 			my $c = join(',', sort($k, @$p));
 			if (exists $seen1{$c}) {
 				next;
