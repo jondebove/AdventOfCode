@@ -14,14 +14,15 @@ my %op = (
 );
 
 my %wire;
-my $nz = 0;
+my %gate;
+my $nz;
 while (<>) {
 	chomp;
-	if (/(\w+): ([01])/) {
-		$wire{$1} = { value => $2 };
+	if (/([xy]\d\d): ([01])/) {
+		$wire{$1} = $2;
 	} elsif (/(\w+) (AND|OR|XOR) (\w+) -> (\w+)/) {
 		my $out = $4;
-		$wire{$out} = { gate => { op => $2, in => [$1, $3] } };
+		$gate{$out} = { op => $2, in => [$1, $3] };
 		$nz++ if $out =~ /^(z\d+)$/;
 	} else {
 		next;
@@ -31,22 +32,50 @@ while (<>) {
 sub get {
 	my ($w) = @_;
 
-	if (defined $wire{$w}{value}) {
-		return $wire{$w}{value};
+	if (defined $wire{$w}) {
+		return $wire{$w};
 	}
 
-	my $gate = $wire{$w}{gate};
-	my $in1 = get($gate->{in}[0]) + 0;
-	my $in2 = get($gate->{in}[1]) + 0;
-	my $out = $op{$gate->{op}}->($in1, $in2);
-	$wire{$w}{value} = $out;
+	my $g = $gate{$w};
+	my $in1 = get($g->{in}[0]) + 0;
+	my $in2 = get($g->{in}[1]) + 0;
+	my $out = $op{$g->{op}}->($in1, $in2);
+	$wire{$w} = $out;
 }
 
 {
 	no warnings qw(portable);
-	$ans1 = oct('0b' . join('', map { get(sprintf 'z%02d', $nz - $_) } (1 .. $nz)));
+	$ans1 = oct('0b' . join('', map { get(sprintf 'z%02d', $nz - $_) }
+			(1 .. $nz)));
 }
 
-# TODO part 2
+{
+	open my $gv, '>', '24.gv' or die;
+	print $gv "digraph {\n";
+	sub dot {
+		my ($w, $v) = @_;
+		if (!defined $v) {
+			$v = "__$w";
+			print $gv "$v [label=$w, shape=rect];\n";
+		}
+		print $gv "$w -> $v [label=$w];\n";
+		my $g = $gate{$w};
+		if (defined($g)) {
+			print $gv "$w [label=$g->{op}];\n";
+			return if ++$g->{done} > 1;
+			dot($g->{in}[0], $w);
+			dot($g->{in}[1], $w);
+		} else {
+			print $gv "$w [shape=rect];\n";
+		}
+	}
+	for (my $i = 0; $i < $nz; $i++) {
+		dot(sprintf('z%02d', $i));
+	}
+	print $gv "}\n";
+	close $gv;
+	# Solution found by hand...
+	$ans2 = join ',', sort qw(z08 mvb rds jss wss z18 bmn z23);
+}
 
 print "$ans1 $ans2\n";
