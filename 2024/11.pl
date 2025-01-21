@@ -7,7 +7,6 @@ use integer;
 use List::Util qw(sum0);
 
 sub blink {
-	my $prev = $_[0];
 	my %stones;
 	while (my ($k, $v) = each %{$_[0]}) {
 		if ($k == 0) {

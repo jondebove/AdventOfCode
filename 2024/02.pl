@@ -5,10 +5,9 @@ use warnings;
 use integer;
 
 sub is_safe {
-	my @r = @_;
 	my $safe = 1;
-	if (@r > 1) {
-		my $diff = $r[1] - $r[0];
+	if (@_ > 1) {
+		my $diff = $_[1] - $_[0];
 		my $inf = 1;
 		my $sup = 3;
 		if ($diff < 0) {
@@ -16,8 +15,8 @@ sub is_safe {
 			$sup = -1;
 		}
 		$safe = $inf <= $diff <= $sup;
-		for (my $i = 2; $safe && $i < @r; $i++) {
-			$diff = $r[$i] - $r[$i - 1];
+		for (my $i = 2; $safe && $i < @_; $i++) {
+			$diff = $_[$i] - $_[$i - 1];
 			$safe = $inf <= $diff <= $sup;
 		}
 	}

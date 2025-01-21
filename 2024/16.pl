@@ -7,7 +7,7 @@ use integer;
 my $ans1 = 0;
 my $ans2 = 0;
 
-my @grid = map {chomp; [split //] } <>;
+my @grid = map { chomp; [split //] } <>;
 
 my @s;
 my @e;
@@ -107,8 +107,9 @@ sub dijkstra {
 			$e = $v;
 			last;
 		}
+		my $pv = $p{$v};
 		while (my ($u, $d) = each %{$g->{$v}}) {
-			$d += $p{$v};
+			$d += $pv;
 			my $pu = $p{$u};
 			if (!defined($pu) || $d < $pu) {
 				$prev{$u} = [$v];

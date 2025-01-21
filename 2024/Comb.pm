@@ -5,7 +5,7 @@ use warnings;
 
 use Exporter 'import';
 BEGIN {
-  our @EXPORT_OK = qw(comb combr perm permr);
+	our @EXPORT_OK = qw(comb combr perm permr);
 }
 
 sub comb {
