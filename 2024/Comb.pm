@@ -5,7 +5,7 @@ use warnings;
 
 use Exporter 'import';
 BEGIN {
-	our @EXPORT_OK = qw(comb combr perm permr);
+	our @EXPORT_OK = qw(comb combr perm permr prod);
 }
 
 sub comb {
@@ -27,6 +27,11 @@ sub perm {
 	my $k = shift;
 	die if $k < 0 || $k > @_;
 	_perm([], $yield, $k, @_); 
+}
+
+sub prod {
+	my $yield = shift;
+	_prod([], $yield, @_); 
 }
 
 sub permr {
@@ -96,6 +101,21 @@ sub _permr {
 			return 0;
 		}
 		push @_, shift;
+	}
+	1;
+}
+
+sub _prod {
+	my $res = shift;
+	my $yield = shift;
+	if (@_ == 0) {
+		return $yield->(@$res);
+	}
+	my $a = shift;
+	for (my $i = 0; $i < @$a; $i++) {
+		if (!_prod([@$res, $a->[$i]], $yield, @_)) {
+			return 0;
+		}
 	}
 	1;
 }
