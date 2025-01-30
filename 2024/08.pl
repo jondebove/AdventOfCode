@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use integer;
 
-use lib '.';
+use lib '../lib';
 use Comb;
 
 my %antennas;
