@@ -25,8 +25,9 @@ for (my @pos = @e; $pos[0] != $s[0] || $pos[1] != $s[1];
 }
 
 my %grid0 = %grid;
-my $mi = $lo + ($hi - $lo) / 2;
-while ($hi != $lo + 1) {
+while ($lo < $hi) {
+	my $mi = $lo + int(($hi - $lo) / 2);
+
 	%grid = %grid0;
 	for (my $k = 1024; $k <= $mi; $k++) {
 		$grid{$bytes[$k][0], $bytes[$k][1]} = '#';
@@ -34,13 +35,12 @@ while ($hi != $lo + 1) {
 
 	my $p = bfs(\%grid, \@dim, \@s, \@e);
 	if (exists $p->{$e[0], $e[1]}) {
-		$lo = $mi;
+		$lo = $mi + 1;
 	} else {
 		$hi = $mi;
 	}
-	$mi = $lo + ($hi - $lo) / 2;
 }
-my $ans2 = join ',', @{$bytes[$hi]};
+my $ans2 = join ',', @{$bytes[$lo]};
 
 print "$ans1 $ans2\n";
 

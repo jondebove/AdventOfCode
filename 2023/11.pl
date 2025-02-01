@@ -24,12 +24,12 @@ while (<>) {
 sub bsearch (&@) {
 	my $code = shift;
 	my $lo = 0;
-	my $hi = $#_;
-	while ($lo <= $hi) {
+	my $hi = @_;
+	while ($lo < $hi) {
 		my $mi = $lo + int(($hi - $lo) / 2);
 		$_ = $_[$mi];
 		my $cmp = $code->();
-		if ($cmp >= 0) { $hi = $mi - 1 }
+		if ($cmp >= 0) { $hi = $mi }
 		elsif ($cmp < 0) { $lo = $mi + 1 }
 		#else { return $mi }
 	}
