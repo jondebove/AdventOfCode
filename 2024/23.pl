@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use integer;
 
-use lib '../lib';
-use Comb;
+use lib qw(./lib ../lib);
+use Combin qw(comb);
 
 my $ans1 = 0;
 my $ans2 = '';
@@ -22,7 +22,7 @@ my %seen1;
 my $max = [];
 while (my ($k, $v) = each %conn) {
 	if (substr($k, 0, 1) eq 't') {
-		Comb::comb(sub {
+		comb(sub {
 			my $c = join(',', sort($k, @_));
 			if (exists $seen1{$c}) {
 				return 1;

@@ -1,4 +1,4 @@
-package Comb;
+package Combin;
 
 use strict;
 use warnings;

@@ -4,6 +4,11 @@ use strict;
 use warnings;
 use integer;
 
+use Exporter 'import';
+BEGIN {
+	our @EXPORT_OK = qw(gcd lcm);
+}
+
 sub _gcd {
 	my ($x, $y) = @_;
 	($x, $y) = ($y, $x % $y) while ($y != 0);

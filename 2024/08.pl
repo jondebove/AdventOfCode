@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use integer;
 
-use lib '../lib';
-use Comb;
+use lib qw(./lib ../lib);
+use Combin qw(comb);
 
 my %antennas;
 my $nr = 0;
@@ -19,7 +19,7 @@ while (<>) {
 
 my %antinodes;
 while (my ($k, $v) = each %antennas) {
-	Comb::comb(sub {
+	comb(sub {
 		my $i = $_[0][0]*2 - $_[1][0];
 		my $j = $_[0][1]*2 - $_[1][1];
 		if (0 <= $i < $nr && 0 <= $j < $nc) {
@@ -37,7 +37,7 @@ my $ans1 = (keys %antinodes);
 
 %antinodes = ();
 while (my ($k, $v) = each %antennas) {
-	Comb::comb(sub {
+	comb(sub {
 		my $i = $_[0][0];
 		my $j = $_[0][1];
 		while (0 <= $i < $nr && 0 <= $j < $nc) {
