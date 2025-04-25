@@ -2,11 +2,13 @@
 .SUFFIXES:
 
 CFLAGS = -Wall -Wextra -Wpedantic
-BINS = 01 02 03 04 05 06
+BINS = 01 02 03 04 05 06 07
 
 all: $(BINS)
 
 $(BINS): utils.o utils.h
+
+07: hashtable.h fnv1a.h
 
 .PHONY: clean
 clean:

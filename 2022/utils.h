@@ -9,15 +9,23 @@
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
+/* xalloc */
+void *xrealloc(void *ptr, size_t size);
+
 /* buffer */
 struct buffer {
 	char *str;
-	long cap;
 	long len;
+	long cap;
 };
 
 void buffer_create(struct buffer *b);
 void buffer_destroy(struct buffer *b);
 int buffer_getdelim(struct buffer *b, int delim, FILE *stream);
+
+struct slice {
+	char *str;
+	long len;
+};
 
 #endif /* AOC_UTILS_H */

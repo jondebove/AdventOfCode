@@ -1,11 +1,23 @@
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "utils.h"
+
+void *xrealloc(void *ptr, size_t size)
+{
+	void *x = realloc(ptr, size);
+	if (!x) {
+		fprintf(stderr, "%s\n", strerror(ENOMEM));
+		exit(1);
+	}
+	return x;
+}
 
 void buffer_create(struct buffer *b)
 {
