@@ -1,7 +1,4 @@
-#define _POSIX_C_SOURCE 200809L
 #include <assert.h>
-#include <limits.h>
-#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,9 +48,6 @@ int main(void)
 	long ans1 = 0;
 	long ans2 = 0;
 
-	struct buffer b;
-	buffer_create(&b);
-
 #define NKNOTS 10
 	struct vec2 knots[NKNOTS] = { 0 };
 	for (int i = 0; i < NKNOTS; i++) {
@@ -65,12 +59,9 @@ int main(void)
 	ans1 += enter(set, knots[1]);
 	ans2 += enter(set, knots[9]);
 
-	while (!buffer_getdelim(&b, '\n', stdin)) {
-		char s[8];
-		int n;
-		sscanf(b.str, "%7s %d", s, &n);
-		assert(n >= 0);
-
+	char s[8];
+	int n;
+	while (scanf("%7s %d", s, &n) == 2) {
 		struct vec2 dir = { 0 };
 		switch (s[0]) {
 			case 'L': dir.x = -1; break;
@@ -79,6 +70,7 @@ int main(void)
 			case 'U': dir.y = +1; break;
 			default: assert(0);
 		}
+		assert(n >= 0);
 
 		while (n--) {
 			move(&knots[0], dir);
@@ -110,7 +102,6 @@ int main(void)
 		free(v);
 	}
 	free(set);
-	buffer_destroy(&b);
 
 	printf("%ld %ld\n", ans1, ans2);
 

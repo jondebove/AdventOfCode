@@ -1,13 +1,11 @@
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
-#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "hashtable.h"
-#include "fnv1a.h"
 #include "utils.h"
 
 struct table;
@@ -54,6 +52,16 @@ void dir_free(struct dir *d)
 	free(d);
 }
 
+static unsigned int hash(char const *s)
+{
+	unsigned int h = 5381;
+	int c;
+	while ((c = (unsigned char)*s++)) {
+		h = h * 33 + c;
+	}
+	return h;
+}
+
 static
 struct dir *dir_searchchild(struct dir *d, char const *name, long size)
 {
@@ -61,7 +69,7 @@ struct dir *dir_searchchild(struct dir *d, char const *name, long size)
 		return NULL;
 	}
 
-	unsigned int h = fnv1a_str(name, FNV1A_SEED);
+	unsigned int h = hash(name);
 	struct dir *c;
 	SHASH_SEARCH_FOREACH(c, h, d->children, dirs) {
 		if (strcmp(name, c->name) == 0) {
