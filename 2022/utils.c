@@ -9,6 +9,7 @@
 
 #include "utils.h"
 
+size_t nalloc = 0;
 void *xrealloc(void *ptr, size_t size)
 {
 	void *x = realloc(ptr, size);
@@ -16,6 +17,7 @@ void *xrealloc(void *ptr, size_t size)
 		fprintf(stderr, "%s\n", strerror(ENOMEM));
 		exit(1);
 	}
+	nalloc++;
 	return x;
 }
 

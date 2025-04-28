@@ -10,6 +10,7 @@
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 /* xalloc */
+extern size_t nalloc;
 void *xrealloc(void *ptr, size_t size);
 
 /* buffer */
