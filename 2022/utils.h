@@ -38,4 +38,13 @@ struct grid {
 void grid_init(struct grid *g, char *data, long len);
 char *grid_at(struct grid *g, long i, long j);
 
+/* arith */
+long gcd(long x, long y);
+long vgcd(long x, ...);
+#define GCD(...) vgcd(__VA_ARGS__, 0L)
+
+long lcm(long x, long y);
+long vlcm(long x, ...);
+#define LCM(...) vlcm(__VA_ARGS__, 0L)
+
 #endif /* AOC_UTILS_H */

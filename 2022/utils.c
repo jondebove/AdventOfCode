@@ -62,3 +62,47 @@ char *grid_at(struct grid *g, long i, long j)
 	return i >= 0 && i < g->nrow && j >= 0 && j < g->ncol ?
 		&g->data[j + (g->ncol + 1) * i] : NULL;
 }
+
+/* arith */
+long gcd(long x, long y)
+{
+	while (y != 0) {
+		long z = x % y;
+		x = y;
+		y = z;
+	}
+	return labs(x);
+}
+
+long lcm(long x, long y)
+{
+	return (x / gcd(x, y)) * y;
+}
+
+#include <stdarg.h>
+
+long vgcd(long x, ...)
+{
+	va_list ap;
+	va_start(ap, x);
+
+	long ans = x;
+	while ((x = va_arg(ap, long))) {
+		ans = gcd(ans, x);
+	}
+	va_end(ap);
+	return ans;
+}
+
+long vlcm(long x, ...)
+{
+	va_list ap;
+	va_start(ap, x);
+
+	long ans = x;
+	while ((x = va_arg(ap, long))) {
+		ans = (ans / gcd(ans, x)) * x;
+	}
+	va_end(ap);
+	return ans;
+}
