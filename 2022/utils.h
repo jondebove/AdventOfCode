@@ -4,10 +4,12 @@
 #include <stdio.h>
 
 /* defs */
-#define COUNTOF(a) (sizeof(a) / sizeof((a)[0]))
+#define COUNTOF(a) ((ptrdiff_t)(sizeof(a) / sizeof((a)[0])))
 #define C(c) ((c) != EOF ? (unsigned char)(c) : EOF)
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define CONTAINEROF(ptr, type, field) \
+	((type *)((char *)((ptr) - offsetof(type, field))))
 
 /* xalloc */
 extern size_t nalloc;
@@ -36,7 +38,7 @@ struct grid {
 	long ncol;
 };
 void grid_init(struct grid *g, char *data, long len);
-char *grid_at(struct grid *g, long i, long j);
+char *grid_at(struct grid const *g, long i, long j);
 
 /* arith */
 long gcd(long x, long y);

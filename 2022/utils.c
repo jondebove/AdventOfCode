@@ -57,7 +57,7 @@ void grid_init(struct grid *g, char *data, long len)
 	g->nrow = len / (g->ncol + 1);
 }
 
-char *grid_at(struct grid *g, long i, long j)
+char *grid_at(struct grid const *g, long i, long j)
 {
 	return i >= 0 && i < g->nrow && j >= 0 && j < g->ncol ?
 		&g->data[j + (g->ncol + 1) * i] : NULL;
