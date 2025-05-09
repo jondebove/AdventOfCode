@@ -20,6 +20,7 @@ struct vertex {
 	char name[4];
 	bool open;
 	long rate;
+	unsigned long bits;
 
 	struct edge edges[NVERTICES_MAX];
 	long nedges;
@@ -72,23 +73,34 @@ static void floydwarshall(struct vertex *v, long n)
 	}
 }
 
-static void dfs1(struct vertex *v, long t, long ans, long *ans1)
+static void dfs(struct vertex *v, long t, long *scores, unsigned long key, long val)
 {
 	v->open = true;
 
-	ans += t * v->rate;
-	*ans1 = MAX(*ans1, ans);
+	val += t * v->rate;
+	key |= v->bits;
+	if (scores[key] < val) {
+		scores[key] = val;
+	}
 
 	for (long i = 0; i < v->nedges; i++) {
 		struct edge *e = &v->edges[i];
 		struct vertex *u = e->next;
 		long w = t - e->weight - 1;
 		if (w > 0 && !u->open) {
-			dfs1(u, w, ans, ans1);
+			dfs(u, w, scores, key, val);
 		}
 	}
 
 	v->open = false;
+}
+
+static long *walk(struct vertex *v, long t, long *scores, long size)
+{
+	scores = xrealloc(scores, size * sizeof(*scores));
+	memset(scores, 0, size * sizeof(*scores));
+	dfs(v, t, scores, 0, 0);
+	return scores;
 }
 
 int main(void)
@@ -105,9 +117,9 @@ int main(void)
 
 	while (!buffer_getdelim(&b, '\n', stdin)) {
 		char name[4];
-		int rate;
+		long rate;
 		char tunnels[8][4];
-		int nscn = sscanf(b.str, "Valve %3[A-Z] has flow rate=%d;"
+		int nscn = sscanf(b.str, "Valve %3[A-Z] has flow rate=%ld;"
 				" %*s %*s to %*s"
 				" %3[A-Z], %3[A-Z], %3[A-Z], %3[A-Z]"
 				" %3[A-Z], %3[A-Z], %3[A-Z], %3[A-Z]",
@@ -124,7 +136,7 @@ int main(void)
 
 		v->edges[v - vertices].next = v;
 		v->edges[v - vertices].weight = 0;
-		for (int i = 0; i < v->nedges; i++) {
+		for (long i = 0; i < v->nedges; i++) {
 			struct vertex *u = vertex_search(tunnels[i], vertices, &nvertices);
 			v->edges[u - vertices].next = u;
 			v->edges[u - vertices].weight = 1;
@@ -137,18 +149,43 @@ int main(void)
 	floydwarshall(vertices, nvertices);
 
 	/* remove broken valves */
-	for (int i = 0; i < nvertices; i++) {
+	long idx = 0;
+	for (long i = 0; i < nvertices; i++) {
 		struct vertex *v = &vertices[i];
-		for (int j = v->nedges - 1; j >= 0; j--) {
+		if (v->rate != 0) {
+			v->bits = 1UL << idx++;
+		}
+		for (long j = v->nedges - 1; j >= 0; j--) {
 			if (v->edges[j].next->rate == 0 || i == j) {
 				v->edges[j] = v->edges[--v->nedges];
 			}
 		}
 	}
 
+	struct vertex *aa = vertex_search("AA", vertices, &nvertices);
+	unsigned long const n = 1UL << idx;
+	long *scores = NULL;
+
 	/* part 1 */
-	struct vertex *v = vertex_search("AA", vertices, &nvertices);
-	dfs1(v, 30, 0, &ans1);
+	scores = walk(aa, 30, scores, n);
+	for (unsigned long i = n - 1; i; i--) {
+		ans1 = MAX(ans1, scores[i]);
+	}
+
+	/* part 2 */
+	scores = walk(aa, 26, scores, n);
+	for (unsigned long i = n - 1; i; i--) {
+		if (scores[i] > 0) {
+			for (unsigned long j = 0; j < i; j++) {
+				if (scores[j] > 0 && (i & j) == 0) {
+					long const ans = scores[i] + scores[j];
+					ans2 = MAX(ans2, ans);
+				}
+			}
+		}
+	}
+
+	free(scores);
 
 	printf("%ld %ld\n", ans1, ans2);
 
