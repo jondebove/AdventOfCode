@@ -1,2 +1,7 @@
 input
 example
+[0-9][0-9]
+
+*.o
+.*.swp
+gmon.out
