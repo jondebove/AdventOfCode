@@ -1,6 +1,7 @@
 #ifndef AOC_UTILS_H
 #define AOC_UTILS_H
 
+#include <stddef.h>
 #include <stdio.h>
 
 /* defs */
