@@ -11,6 +11,7 @@
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define CONTAINEROF(ptr, type, field) \
 	((type *)((char *)((ptr) - offsetof(type, field))))
+#define SAMESIGN(x, y) (((x) < 0) == ((y) < 0))
 
 /* xalloc */
 extern size_t nalloc;
@@ -51,5 +52,7 @@ long vgcd(long x, ...);
 long lcm(long x, long y);
 long vlcm(long x, ...);
 #define LCM(...) vlcm(__VA_ARGS__, 0L)
+
+long bisectl(long (*f)(long x, void *ctx), long lo, long hi, void *ctx);
 
 #endif /* AOC_UTILS_H */

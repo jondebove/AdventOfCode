@@ -126,3 +126,28 @@ long vlcm(long x, ...)
 	va_end(ap);
 	return ans;
 }
+
+/* bisect */
+long bisectl(long (*f)(long x, void *ctx), long lo, long hi, void *ctx)
+{
+	long flo, fhi;
+	if ((flo = f(lo, ctx)) == 0) {
+		return lo;
+	}
+	if ((fhi = f(hi, ctx)) == 0) {
+		return hi;
+	}
+	assert(!SAMESIGN(flo, fhi));
+	while (lo < hi) {
+		long mi = lo + (hi - lo) / 2;
+		if ((flo = f(mi, ctx)) == 0) {
+			return mi;
+		} else if (!SAMESIGN(flo, fhi)) {
+			lo = mi + 1;
+		} else {
+			hi = mi;
+			fhi = flo;
+		}
+	}
+	return LONG_MIN;
+}
