@@ -39,7 +39,7 @@ struct grid {
 	long nrow;
 	long ncol;
 };
-void grid_create(struct grid *g, long nrow, long ncol);
+void grid_create(struct grid *g, long nrow, long ncol, int fill);
 void grid_destroy(struct grid *g);
 void grid_init(struct grid *g, char *data, long len);
 char *grid_at(struct grid const *g, long i, long j);

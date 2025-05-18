@@ -50,11 +50,11 @@ int buffer_getdelim(struct buffer *b, int delim, FILE *stream)
 	return 0;
 }
 
-void grid_create(struct grid *g, long nrow, long ncol)
+void grid_create(struct grid *g, long nrow, long ncol, int fill)
 {
 	long const size = nrow * (ncol + 1);
 	g->data = xrealloc(NULL, size);
-	memset(g->data, '.', size);
+	memset(g->data, fill, size);
 	for (long i = ncol; i < size; i += ncol + 1) {
 		g->data[i] = '\n';
 	}

@@ -131,7 +131,7 @@ int main(void)
 	struct jet j = { b.str, 0 };
 
 	struct grid g;
-	grid_create(&g, 1L << 16, 7);
+	grid_create(&g, 1L << 16, 7, '.');
 
 	/* part 1 */
 	long ymax = 0;
