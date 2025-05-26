@@ -14,7 +14,6 @@ struct vertex {
 	STAILQ_ENTRY(vertex) queue;
 	struct vertex *next[4 + 1];
 	struct vertex *prev;
-	bool seen;
 };
 STAILQ_HEAD(queue, vertex);
 
@@ -26,14 +25,14 @@ struct vertex *bfs(struct vertex *vertices, long nvertices,
 	assert(nvertices > 0);
 
 	while (nvertices--) {
-		vertices->seen = 0;
+		vertices->prev = NULL;
 		vertices++;
 	}
 
 	struct queue q;
 	STAILQ_INIT(&q);
 	STAILQ_INSERT_TAIL(&q, s, queue);
-	s->seen = true;
+	s->prev = s;
 
 	while (!STAILQ_EMPTY(&q)) {
 		struct vertex *v = STAILQ_FIRST(&q); 
@@ -42,9 +41,8 @@ struct vertex *bfs(struct vertex *vertices, long nvertices,
 			return v;
 		}
 		for (struct vertex **u = v->next; *u; u++) {
-			if (!(*u)->seen) {
+			if (!(*u)->prev) {
 				STAILQ_INSERT_TAIL(&q, *u, queue);
-				(*u)->seen = true;
 				(*u)->prev = v;
 			}
 		}
@@ -128,11 +126,11 @@ int main(void)
 	}
 
 	for (v = bfs(vertices, nvertices, s, done1, e);
-			v && v != s; v = v->prev) {
+			v && v != v->prev; v = v->prev) {
 		ans1++;
 	}
 	for (v = bfs(vertices, nvertices, s, done2, &e->data);
-			v && v != s; v = v->prev) {
+			v && v != v->prev; v = v->prev) {
 		ans2++;
 	}
 

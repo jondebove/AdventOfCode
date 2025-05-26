@@ -56,8 +56,8 @@ struct name {								\
 
 #define HASH_ENTRY(type)						\
 struct {								\
-	LIST_ENTRY(type) he_list;					\
 	unsigned int he_hash;						\
+	LIST_ENTRY(type) he_list;					\
 }
 
 /*
@@ -65,12 +65,11 @@ struct {								\
  */
 #define HASH_TABLE_SIZE(name, shift)					\
 	(sizeof(struct name) + (1U << (shift)) *			\
-	 sizeof(&((struct name *)0)->ht_table[0]))
+	 sizeof(((struct name *)0)->ht_table[0]))
 
 #define HASH_INIT(htab, shift) do {					\
 	(htab)->ht_shift = (shift);					\
-	unsigned int h__idx;						\
-	for (h__idx = 0; h__idx < HASH_SIZE(htab); h__idx++)		\
+	for (unsigned int h__idx = HASH_SIZE(htab); h__idx--;)		\
 		LIST_INIT(&(htab)->ht_table[h__idx]);			\
 } while (0)
 
@@ -102,8 +101,7 @@ struct {								\
  * Hash table for loops.
  */
 #define HASH_FOREACH(var, htab, field)					\
-	for (unsigned int h__idx = 0;					\
-			h__idx < HASH_SIZE(htab); h__idx++)		\
+	for (unsigned int h__idx = HASH_SIZE(htab); h__idx--;)		\
 		LIST_FOREACH((var), &(htab)->ht_table[h__idx],		\
 				field.he_list)
 
@@ -123,8 +121,7 @@ struct {								\
 #endif /* LIST_FOREACH_SAFE */
 
 #define HASH_FOREACH_SAFE(var, htab, field, nxt)			\
-	for (unsigned int h__idx = 0;					\
-			h__idx < HASH_SIZE(htab); h__idx++)		\
+	for (unsigned int h__idx = HASH_SIZE(htab); h__idx--;)		\
 		LIST_FOREACH_SAFE((var), &(htab)->ht_table[h__idx],	\
 				field.he_list, (nxt))
 
@@ -156,8 +153,8 @@ struct name {								\
 
 #define SHASH_ENTRY(type)						\
 struct {								\
-	SLIST_ENTRY(type) she_list;					\
 	unsigned int she_hash;						\
+	SLIST_ENTRY(type) she_list;					\
 }
 
 /*
@@ -165,12 +162,11 @@ struct {								\
  */
 #define SHASH_TABLE_SIZE(name, shift)					\
 	(sizeof(struct name) + (1U << (shift)) *			\
-	 sizeof(&((struct name *)0)->sht_table[0]))
+	 sizeof(((struct name *)0)->sht_table[0]))
 
 #define SHASH_INIT(htab, shift) do {					\
 	(htab)->sht_shift = (shift);					\
-	unsigned int sh__idx;						\
-	for (sh__idx = 0; sh__idx < SHASH_SIZE(htab); sh__idx++)	\
+	for (unsigned int sh__idx = SHASH_SIZE(htab); sh__idx--;)	\
 		SLIST_INIT(&(htab)->sht_table[sh__idx]);		\
 } while (0)
 
@@ -205,8 +201,7 @@ struct {								\
  * Simple hash table for loops.
  */
 #define SHASH_FOREACH(var, htab, field)					\
-	for (unsigned int sh__idx = 0;					\
-			sh__idx < SHASH_SIZE(htab); sh__idx++)		\
+	for (unsigned int sh__idx = SHASH_SIZE(htab); sh__idx--;)	\
 		SLIST_FOREACH((var), &(htab)->sht_table[sh__idx],	\
 				field.she_list)
 
@@ -226,8 +221,7 @@ struct {								\
 #endif /* SLIST_FOREACH_SAFE */
 
 #define SHASH_FOREACH_SAFE(var, htab, field, nxt)			\
-	for (unsigned int sh__idx = 0;					\
-			sh__idx < SHASH_SIZE(htab); sh__idx++)		\
+	for (unsigned int sh__idx = SHASH_SIZE(htab); sh__idx--;)	\
 		SLIST_FOREACH_SAFE((var), &(htab)->sht_table[sh__idx],	\
 				field.she_list, (nxt))
 
