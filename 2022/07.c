@@ -5,34 +5,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hashtable.h"
+#include <sys/queue.h>
+
 #include "utils.h"
 
-struct table;
+struct dir;
+
+SLIST_HEAD(dir_list, dir);
 
 struct dir {
+	enum { DIR_DIR, DIR_FILE } type;
 	char *name;
 	struct dir *parent;
-	struct table *children;
+	struct dir_list children;
 	long size;
-	SHASH_ENTRY(dir) dirs;
+	SLIST_ENTRY(dir) dirs;
 };
-
-SHASH_TABLE(table, dir);
 
 static
 struct dir *dir_new(char const *name, struct dir *parent, long size)
 {
 	struct dir *d = xrealloc(NULL, sizeof(*d));
+	d->type = size == 0 ? DIR_DIR : DIR_FILE;
 	d->name = strdup(name);
 	d->parent = parent;
+	SLIST_INIT(&d->children);
 	d->size = size;
-	if (size) {
-		d->children = NULL;
-	} else {
-		d->children = xrealloc(NULL, SHASH_TABLE_SIZE(table, 4));
-		SHASH_INIT(d->children, 4);
-	}
 	return d;
 }
 
@@ -40,45 +38,29 @@ static
 void dir_free(struct dir *d)
 {
 	if (d) {
-		if (d->children) {
-			struct dir *c, *cc;
-			SHASH_FOREACH_SAFE(c, d->children, dirs, cc) {
-				dir_free(c);
-			}
-			free(d->children);
+		struct dir *c = SLIST_FIRST(&d->children);
+		while (c) {
+			struct dir *cc = SLIST_NEXT(c, dirs);
+			dir_free(c);
+			c = cc;
 		}
 		free(d->name);
 	}
 	free(d);
 }
 
-static unsigned int hash(char const *s)
-{
-	unsigned int h = 5381;
-	int c;
-	while ((c = (unsigned char)*s++)) {
-		h = h * 33 + c;
-	}
-	return h;
-}
-
 static
 struct dir *dir_searchchild(struct dir *d, char const *name, long size)
 {
-	if (!d->children) {
-		return NULL;
-	}
-
-	unsigned int h = hash(name);
 	struct dir *c;
-	SHASH_SEARCH_FOREACH(c, h, d->children, dirs) {
+	SLIST_FOREACH(c, &d->children, dirs) {
 		if (strcmp(name, c->name) == 0) {
 			break;
 		}
 	}
 	if (!c) {
 		c = dir_new(name, d, size);
-		SHASH_INSERT(d->children, c, h, dirs);
+		SLIST_INSERT_HEAD(&d->children, c, dirs);
 	} else {
 		c->size = size;
 	}
@@ -88,28 +70,30 @@ struct dir *dir_searchchild(struct dir *d, char const *name, long size)
 static
 void dir_print(struct dir *d, int level)
 {
+	static char const *const type_name[] = {
+		[DIR_DIR]  = "dir",
+		[DIR_FILE] = "file",
+	};
+
 	for (int i = level; i; i--) {
 		putc(' ', stdout);
 	}
 	fprintf(stdout, "- %s (%s, %ld)\n",
-			d->name,
-			d->children ? "dir" : "file",
-			d->size);
-	if (d->children) {
-		struct dir *c;
-		SHASH_FOREACH(c, d->children, dirs) {
-			dir_print(c, level + 2);
-		}
+			d->name, type_name[d->type], d->size);
+
+	struct dir *c;
+	SLIST_FOREACH(c, &d->children, dirs) {
+		dir_print(c, level + 2);
 	}
 }
 
 static
 long dir_updatesize(struct dir *d)
 {
-	if (d->children) {
+	if (d->type == DIR_DIR) {
 		d->size = 0;
 		struct dir *c;
-		SHASH_FOREACH(c, d->children, dirs) {
+		SLIST_FOREACH(c, &d->children, dirs) {
 			d->size += dir_updatesize(c);
 		}
 	}
@@ -120,12 +104,12 @@ static
 long dir_ans1(struct dir const *d, long max)
 {
 	long ans = 0;
-	if (d->children) {
+	if (d->type == DIR_DIR) {
 		if (d->size <= max) {
 			ans += d->size;
 		}
 		struct dir *c;
-		SHASH_FOREACH(c, d->children, dirs) {
+		SLIST_FOREACH(c, &d->children, dirs) {
 			ans += dir_ans1(c, max);
 		}
 	}
@@ -135,12 +119,12 @@ long dir_ans1(struct dir const *d, long max)
 static
 long dir_ans2(struct dir const *d, long min, long max)
 {
-	if (d->children) {
+	if (d->type == DIR_DIR) {
 		if (d->size >= min && d->size < max) {
 			max = d->size;
 		}
 		struct dir *c;
-		SHASH_FOREACH(c, d->children, dirs) {
+		SLIST_FOREACH(c, &d->children, dirs) {
 			max = dir_ans2(c, min, max);
 		}
 	}

@@ -9,7 +9,7 @@ all: $(BINS)
 
 $(BINS): utils.o utils.h
 
-07 09 19 24: hashtable.h
+09 19 24: hashtable.h
 
 .PHONY: clean
 clean:
