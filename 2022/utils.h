@@ -9,8 +9,6 @@
 #define C(c) ((c) != EOF ? (unsigned char)(c) : EOF)
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define CONTAINEROF(ptr, type, field) \
-	((type *)((char *)((ptr) - offsetof(type, field))))
 #define SAMESIGN(x, y) (((x) < 0) == ((y) < 0))
 
 /* xalloc */
