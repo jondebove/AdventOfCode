@@ -52,14 +52,14 @@ out:
 	fmt.Println(ans1, ans2)
 }
 
-// Heron's method 
+// Heron's method
 func isqrt(x int) int {
 	if x <= 1 {
 		return x
 	}
 	y := x / 2
 	for {
-		y1 := (y + x / y) / 2
+		y1 := (y + x/y) / 2
 		if y1 >= y {
 			return y
 		}

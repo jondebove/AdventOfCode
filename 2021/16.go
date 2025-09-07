@@ -7,13 +7,13 @@ import (
 )
 
 type reader struct {
-	buf []byte
-	pos int
+	buf      []byte
+	pos      int
 	decoding [256]byte
 }
 
 func newReader(buf []byte) *reader {
-	r := reader{ buf: buf }
+	r := reader{buf: buf}
 	encoding := []byte("0123456789ABCDEF")
 	for i, b := range encoding {
 		r.decoding[b] = byte(i)
@@ -51,7 +51,9 @@ func dfs(r *reader) (nread, ans1, ans2 uint64) {
 				nread += nr
 				ans1 += a1
 				values = append(values, a2)
-				if nr > n { panic("nr > n") }
+				if nr > n {
+					panic("nr > n")
+				}
 				n -= nr
 			}
 		case 1:
@@ -89,7 +91,7 @@ func dfs(r *reader) (nread, ans1, ans2 uint64) {
 				ans2 = v
 			}
 		}
-	case 4 :
+	case 4:
 		cont := r.read(1)
 		ans2 = r.read(4)
 		nread += 5
