@@ -2,7 +2,7 @@
 .SUFFIXES:
 
 CFLAGS = -Wall -Wextra -Wpedantic #-g -pg
-BINS = 01 02 03 04 05 06 07 08
+BINS = 01 02 03 04 05 06 07 08 09
 
 all: $(BINS)
 
