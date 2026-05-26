@@ -13,7 +13,7 @@ struct dev {
 	long ans;
 };
 
-struct dev *dev_search(struct dev *devs, int *n, char const *s)
+static struct dev *dev_search(struct dev *devs, int *n, char const *s)
 {
 	assert(strlen(s) < sizeof(devs->name));
 	int i;
@@ -25,12 +25,11 @@ struct dev *dev_search(struct dev *devs, int *n, char const *s)
 
 	assert(*n < DEVS_CAP);
 	strcpy(devs[*n].name, s);
-	devs[*n].ans = -1;
 	*n += 1;
 	return &devs[*n - 1];
 }
 
-long dfs(struct dev *src, struct dev *dst)
+static long dfs(struct dev *src, struct dev *dst)
 {
 	if (src == dst) return 1;
 	if (src->ans < 0) {
@@ -47,7 +46,7 @@ long dfs(struct dev *src, struct dev *dst)
 	return src->ans;
 }
 
-long f(struct dev *devs, int n, char const *src, char const *dst)
+static long f(struct dev *devs, int n, char const *src, char const *dst)
 {
 	int i;
 	for (i = n; i--; ) devs[i].ans = -1;

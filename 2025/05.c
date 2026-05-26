@@ -7,14 +7,14 @@ struct range {
 	long max;
 };
 
-int long_cmp(void const *a, void const *b)
+static int long_cmp(void const *a, void const *b)
 {
 	long const *xa = a;
 	long const *xb = b;
 	return (*xa < *xb) ? -1 : (*xa > *xb);
 }
 
-int range_cmp(void const *a, void const *b)
+static int range_cmp(void const *a, void const *b)
 {
 	struct range const *ra = a;
 	struct range const *rb = b;
@@ -22,7 +22,7 @@ int range_cmp(void const *a, void const *b)
 	return cmp ? cmp : long_cmp(&ra->max, &rb->max);
 }
 
-int range_has(void const *a, void const *b)
+static int range_has(void const *a, void const *b)
 {
 	long const *x = a;
 	struct range const *r = b;

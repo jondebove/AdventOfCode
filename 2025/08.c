@@ -19,7 +19,7 @@ struct con {
 	long d;
 };
 
-void con_init(struct con *c, struct box *a, struct box *b)
+static void con_init(struct con *c, struct box *a, struct box *b)
 {
 	c->a = a;
 	c->b = b;
@@ -44,7 +44,7 @@ static int int_cmp_rev(void const *a, void const *b)
 	return (*xa < *xb) ? -1 : (*xa > *xb);
 }
 
-void isortappend(void *elem, void *base, size_t n, size_t size,
+static void isortappend(void *elem, void *base, size_t n, size_t size,
 		int (*cmp)(void const *a, void const *b))
 {
 	char *p0 = (char *)base + n * size;

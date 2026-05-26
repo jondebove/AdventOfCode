@@ -2,7 +2,7 @@
 
 #include "utils.h"
 
-int grid_get(struct grid const *g, long i, long j)
+static int grid_get(struct grid const *g, long i, long j)
 {
 	return i >= 0 && i < g->nrow && j >= 0 && j < g->ncol ?
 		g->data[j + (g->ncol + 1) * i] : -1;
