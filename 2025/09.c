@@ -8,21 +8,23 @@ struct point {
 	int y;
 };
 
-bool point_inside(struct point const p[static 1], size_t np, struct point const ps[static np])
+static bool intersect(struct point const *p0, struct point const *q0,
+		struct point const *p1, struct point const *q1)
 {
-	bool inside = false;
-	struct point const *pp;
-	for (pp = &ps[np - 1]; np--; pp = ps++) {
-		if ((pp->y >= p->y) == (ps->y >= p->y)) continue;
-
-		int xf = (pp->x >= p->x);
-		if (xf == (ps->x >= p->x)) {
-			inside = xf ? !inside : inside;
-		} else if ((ps->y - p->y) * (pp->x - ps->x) >= (ps->x - p->x) * (pp->y - ps->y)) {
-			inside = !inside;
-		}
+	if (p0->x == q0->x) {
+		/* [p0,q0] vertical. */
+		if (p1->x == q1->x) return false;
+		/* [p1,q1] horizontal. */
+		if ((p0->x <  p1->x) == (p0->x <  q1->x)) return false;
+		if ((p1->y <= p0->y) == (p1->y <= q0->y)) return false;
+	} else {
+		/* [p0,q0] horizontal. */
+		if (p1->y == q1->y) return false;
+		/* [p1,q1] vertical. */
+		if ((p0->y <  p1->y) == (p0->y <  q1->y)) return false;
+		if ((p1->x <= p0->x) == (p1->x <= q0->x)) return false;
 	}
-	return inside;
+	return true;
 }
 
 int main(void)
@@ -45,9 +47,26 @@ int main(void)
 				(labs(ps[i].y - ps[j].y) + 1L);
 			ans1 = area > ans1 ? area : ans1;
 
-			// TODO part 2
+			int k, l;
+			for (k = np - 1, l = 0; l < np; k = l++) {
+				/* We only check the borders of the rectangle. */
+				struct point p, q;
+				p.x = ps[i].x, p.y = ps[i].y;
+				q.x = ps[i].x, q.y = ps[j].y;
+				if (intersect(&p, &q, &ps[k], &ps[l])) goto next;
+				q.x = ps[j].x, q.y = ps[i].y;
+				if (intersect(&p, &q, &ps[k], &ps[l])) goto next;
+				p.x = ps[j].x, p.y = ps[j].y;
+				if (intersect(&p, &q, &ps[k], &ps[l])) goto next;
+				q.x = ps[i].x, q.y = ps[j].y;
+				if (intersect(&p, &q, &ps[k], &ps[l])) goto next;
+			}
+			ans2 = area > ans2 ? area : ans2;
+next: ;
 		}
 	}
+
+	free(ps);
 
 	printf("%ld %ld\n", ans1, ans2);
 	return 0;
