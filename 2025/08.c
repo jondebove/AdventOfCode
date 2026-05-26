@@ -5,12 +5,11 @@
 
 struct box {
 	struct box *prev;
-	struct box *next;
-	int seen;
+	int count;
 
-	int x;
-	int y;
-	int z;
+	long x;
+	long y;
+	long z;
 };
 
 struct con {
@@ -39,55 +38,50 @@ static int con_cmp(void const *a, void const *b)
 
 static int int_cmp_rev(void const *a, void const *b)
 {
-	int const *xa = b;
-	int const *xb = a;
-	return (*xa < *xb) ? -1 : (*xa > *xb);
+	int const *xa = a;
+	int const *xb = b;
+	return (*xa > *xb) ? -1 : (*xa < *xb);
 }
 
-static void isortappend(void *elem, void *base, size_t n, size_t size,
+static void isortappend(void const *elem, void *base, size_t n, size_t size,
 		int (*cmp)(void const *a, void const *b))
 {
-	char *p0 = (char *)base + n * size;
-	memcpy(p0, elem, size);
-
-	while (p0 != base) {
-		char *p1 = p0 - size;
-		if (cmp(p0, p1) >= 0) break;
-
-		memcpy(elem, p0, size);
-		memcpy(p0, p1, size);
-		memcpy(p1, elem, size);
-
-		p0 = p1;
+	char *p = (char *)base + n * size;
+	while (p != base && cmp(p - size, elem) > 0) {
+		memcpy(p, p - size, size);
+		p -= size;
 	}
+	memcpy(p, elem, size);
 }
 
 static int connect(struct con const *c)
 {
-	/* Search if already connected. */
-	struct box *b;
-	for (b = c->a->next; b != c->a; b = b->next) {
-		if (b == c->b) {
-			b = NULL;
-			break;
-		}
+	/* Find with path compression. */
+	struct box *a, *b, *p;
+	for (a = c->a; a->prev != a; a = p) {
+		p = a->prev;
+		a->prev = p->prev;
+	}
+	for (b = c->b; b->prev != b; b = p) {
+		p = b->prev;
+		b->prev = p->prev;
 	}
 
-	/* Concatenate. */
-	if (b) {
-		c->b->prev->next = c->a->next;
-		c->a->next->prev = c->b->prev;
-		c->a->next = c->b;
-		c->b->prev = c->a;
-		//con_print(c);
-		return 1;
+	/* Union. */
+	if (a == b) return 0;
+
+	if (a->count < b->count) {
+		a->prev = b;
+		b->count += a->count;
+	} else {
+		b->prev = a;
+		a->count += b->count;
 	}
-	return 0;
+	return 1;
 }
 
 #define BS_MAX 1024
 #define CS_MAX (1024 * 512)
-#define NC_PART1 1000
 
 int main(void)
 {
@@ -97,10 +91,9 @@ int main(void)
 	/* Boxes. */
 	struct box *bs = calloc(BS_MAX, sizeof(*bs));
 	struct box *b = bs;
-	while (scanf(" %d,%d,%d ", &b->x, &b->y, &b->z) == 3) {
+	while (scanf(" %ld,%ld,%ld ", &b->x, &b->y, &b->z) == 3) {
 		b->prev = b;
-		b->next = b;
-		b->seen = 0;
+		b->count = 1;
 		b++;
 		assert(b - bs < BS_MAX);
 	}
@@ -121,7 +114,7 @@ int main(void)
 	/*
 	 * Part 1.
 	 */
-	int ncon = NC_PART1;
+	int ncon = nbs > 100 ? 1000 : 10;
 	struct con *c;
 	for (c = cs; ncon--; c++) {
 		assert(c - cs < ncs);
@@ -129,29 +122,22 @@ int main(void)
 	}
 
 	/* Get the size of the 3 largest circuits. */
-	int n3[4] = {0};
+	int n[4] = {0};
 	for (i = 0; i < nbs; i++) {
-		if (bs[i].seen) continue;
-
-		/* Count. */
-		bs[i].seen = 1;
-		int n = 1;
-		for (b = bs[i].next; b != &bs[i]; b = b->next) {
-			b->seen = 1;
-			n++;
-		}
-
-		isortappend(&n, n3, 3, sizeof(n), int_cmp_rev);
+		if (bs[i].prev != &bs[i]) continue;
+		isortappend(&bs[i].count, n, 3, sizeof(*n), int_cmp_rev);
 	}
-	ans1 = n3[0] * n3[1] * n3[2];
+	ans1 = n[0] * n[1] * n[2];
 
 	/*
 	 * Part 2.
 	 */
-	while ((ncircuits -= connect(c)) > 1) {
-		c++;
+	for (;; c++) {
 		assert(c - cs < ncs);
+		ncircuits -= connect(c);
+		if (ncircuits == 1) break;
 	}
+	assert(c->a->prev->count == nbs);
 	ans2 = c->a->x * c->b->x;
 
 	free(bs);
