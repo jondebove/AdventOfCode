@@ -1,19 +1,16 @@
 #include <assert.h>
 #include <stdio.h>
-#include <sys/queue.h>
+#include <string.h>
 
 #include "utils.h"
 
-struct crate {
-	int id;
-	STAILQ_ENTRY(crate) crates1;
-	STAILQ_ENTRY(crate) crates2;
-};
-
-STAILQ_HEAD(stack, crate);
-
 #define NSTACKS_MAX 16
-#define NCRATES_MAX 256
+#define NCRATES_MAX 127
+
+struct stack {
+	int c[NCRATES_MAX];
+	int n;
+};
 
 int main(void)
 {
@@ -27,70 +24,64 @@ int main(void)
 	buffer_getdelim(&b, '\n', stdin);
 
 	/* initialize */
-	struct crate crates[NCRATES_MAX];
-	struct crate *crate_end = crates;
-	struct stack stacks1[NSTACKS_MAX];
-	struct stack stacks2[NSTACKS_MAX];
-
-	long nstacks = b.len / 4;
+	struct stack stacks1[NSTACKS_MAX] = { 0 };
+	int nstacks = b.len / 4;
 	assert(nstacks <= NSTACKS_MAX);
-	for (long i = 0; i < nstacks; i++) {
-		STAILQ_INIT(&stacks1[i]);
-		STAILQ_INIT(&stacks2[i]);
-	}
 
+	int i;
 	/* parse initial state */
 	do {
-		for (long i = 0; i < nstacks; i++) {
+		for (i = 0; i < nstacks; i++) {
 			int id = b.str[4*i+1];
 			if (id != ' ') {
-				struct crate *c = crate_end++;
-				assert(crate_end < crates + NCRATES_MAX);
-				c->id = id;
-				STAILQ_INSERT_TAIL(&stacks1[i], c, crates1);
-				STAILQ_INSERT_TAIL(&stacks2[i], c, crates2);
+				stacks1[i].c[stacks1[i].n++] = id;
 			}
 		}
 	} while (!buffer_getdelim(&b, '\n', stdin) && b.str[1] != '1');
+
+	/* reverse */
+	for (i = 0; i < nstacks; i++) {
+		int j, k;
+		for (j = 0, k = stacks1[i].n - 1; j < k; j++, k--) {
+			int tmp = stacks1[i].c[j];
+			stacks1[i].c[j] = stacks1[i].c[k];
+			stacks1[i].c[k] = tmp;
+		}
+	}
+
+	/* duplicate for part 2 */
+	struct stack stacks2[NSTACKS_MAX];
+	memcpy(stacks2, stacks1, sizeof(stacks1));
 
 	/* skip empty line */
 	buffer_getdelim(&b, '\n', stdin);
 
 	/* move crates */
 	while (!buffer_getdelim(&b, '\n', stdin)) {
-		long n, from, to;
-		sscanf(b.str, "move %ld from %ld to %ld", &n, &from, &to);
-		if (n == 0 || from == to) {
-			continue;
-		}
-		from--; to--;
-		assert(n > 0);
-		assert(from >= 0 && from < nstacks);
-		assert(to >= 0 && to < nstacks);
+		int n, from, to;
+		sscanf(b.str, "move %d from %d to %d", &n, &from, &to);
+		if (n == 0 || from == to) continue;
 
-		for (long i = n; i && !STAILQ_EMPTY(&stacks1[from]); i--) {
-			struct crate *c = STAILQ_FIRST(&stacks1[from]);
-			STAILQ_REMOVE_HEAD(&stacks1[from], crates1);
-			STAILQ_INSERT_HEAD(&stacks1[to], c, crates1);
+		/* part 1 */
+		struct stack *src = &stacks1[from - 1];
+		struct stack *dst = &stacks1[to - 1];
+		for (i = n < src->n ? n : src->n; i; i--) {
+			dst->c[dst->n++] = src->c[--src->n];
 		}
 
-		struct crate *p = STAILQ_FIRST(&stacks2[from]);
-		STAILQ_REMOVE_HEAD(&stacks2[from], crates2);
-		STAILQ_INSERT_HEAD(&stacks2[to], p, crates2);
-		for (long i = n - 1; i && !STAILQ_EMPTY(&stacks2[from]); i--) {
-			struct crate *c = STAILQ_FIRST(&stacks2[from]);
-			STAILQ_REMOVE_HEAD(&stacks2[from], crates2);
-			STAILQ_INSERT_AFTER(&stacks2[to], p, c, crates2);
-			p = c;
+		/* part 2 */
+		src = &stacks2[from - 1];
+		dst = &stacks2[to - 1];
+		n = n < src->n ? n : src->n;
+		for (i = n; i; i--) {
+			dst->c[dst->n++] = src->c[src->n - i];
 		}
+		src->n -= n;
 	}
 
-	for (long i = 0; i < nstacks; i++) {
-		struct crate *c;
-		c = STAILQ_FIRST(&stacks1[i]);
-		ans1[i] = c ? c->id : '.';
-		c = STAILQ_FIRST(&stacks2[i]);
-		ans2[i] = c ? c->id : '.';
+	for (i = 0; i < nstacks; i++) {
+		ans1[i] = stacks1[i].c[stacks1[i].n - 1];
+		ans2[i] = stacks2[i].c[stacks2[i].n - 1];
 	}
 	ans1[nstacks] = '\0';
 	ans2[nstacks] = '\0';
@@ -98,6 +89,5 @@ int main(void)
 	buffer_destroy(&b);
 
 	printf("%s %s\n", ans1, ans2);
-
 	return 0;
 }
