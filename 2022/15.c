@@ -1,8 +1,9 @@
+#define _XOPEN_SOURCE 700
 #include <assert.h>
+#include <search.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/queue.h>
 
 #include "utils.h"
 
@@ -14,11 +15,10 @@ struct sensor {
 };
 
 struct range {
+	struct qnode list;
 	long min;
 	long max;
-	LIST_ENTRY(range) list;
 };
-LIST_HEAD(rlist, range);
 
 static struct range *range_new(long min, long max)
 {
@@ -28,10 +28,9 @@ static struct range *range_new(long min, long max)
 	return r;
 }
 
-struct rlist scan_row(struct sensor *s, long n, long row)
+struct qnode scan_row(struct sensor *s, long n, long row)
 {
-	struct rlist ranges;
-	LIST_INIT(&ranges);
+	struct qnode ranges = { NULL, NULL };
 
 	for (; n--; s++) {
 		long const dr = s->d - labs(s->y - row);
@@ -41,18 +40,18 @@ struct rlist scan_row(struct sensor *s, long n, long row)
 
 		struct range *r0 = range_new(s->x - dr, s->x + dr);
 		struct range *r, *rn;
-		for (r = LIST_FIRST(&ranges); r; r = rn) {
-			rn = LIST_NEXT(r, list);
+		for (r = ranges.next; r; r = rn) {
+			rn = r->list.next;
 			if (r->min > r0->max || r->max < r0->min) {
 				/* disjoint */
 			} else {
 				r0->min = MIN(r0->min, r->min);
 				r0->max = MAX(r0->max, r->max);
-				LIST_REMOVE(r, list);
+				remque(r);
 				free(r);
 			}
 		}
-		LIST_INSERT_HEAD(&ranges, r0, list);
+		insque(r0, &ranges);
 	}
 	return ranges;
 }
@@ -82,20 +81,20 @@ int main(void)
 	buffer_destroy(&b);
 
 	/* part 1 */
-	struct rlist ranges = scan_row(sensors, nsensors, 2000000);
+	struct qnode ranges = scan_row(sensors, nsensors, 2000000);
 	struct range *r, *rn;
-	for (r = LIST_FIRST(&ranges); r; r = rn) {
-		rn = LIST_NEXT(r, list);
+	for (r = ranges.next; r; r = rn) {
+		rn = r->list.next;
 		ans1 += r->max - r->min; // no +1 because a beacon is already there
 		free(r);
 	}
 
 	for (long i = 0; i < 4000000; i++) {
-		struct rlist ranges = scan_row(sensors, nsensors, i);
+		struct qnode ranges = scan_row(sensors, nsensors, i);
 		struct range r0 = { .min = 0, .max = 4000000 };
 		struct range *r, *rn;
-		for (r = LIST_FIRST(&ranges); r; r = rn) {
-			rn = LIST_NEXT(r, list);
+		for (r = ranges.next; r; r = rn) {
+			rn = r->list.next;
 			if (r->min > r0.max || r->max < r0.min) {
 				/* disjoint */
 			} else {

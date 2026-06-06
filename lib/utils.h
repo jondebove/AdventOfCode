@@ -10,6 +10,8 @@
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define SAMESIGN(x, y) (((x) < 0) == ((y) < 0))
+#define CONTAINEROF(ptr, type, field) \
+	((type *)((char *)(ptr) - offsetof(type, field)))
 
 /* xalloc */
 extern size_t nalloc;
@@ -41,6 +43,12 @@ void grid_create(struct grid *g, long nrow, long ncol, int fill);
 void grid_destroy(struct grid *g);
 void grid_init(struct grid *g, char *data, long len);
 char *grid_at(struct grid const *g, long i, long j);
+
+/* queue */
+struct qnode {
+	void *next;
+	void *prev;
+};
 
 /* arith */
 long gcd(long x, long y);

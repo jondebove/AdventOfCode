@@ -1,21 +1,20 @@
+#define _XOPEN_SOURCE 700
 #include <assert.h>
+#include <search.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/queue.h>
 
 #include "utils.h"
 
 struct vertex {
-	int data;
-
-	STAILQ_ENTRY(vertex) queue;
+	struct qnode queue;
 	struct vertex *next[4 + 1];
 	struct vertex *prev;
+	int data;
 };
-STAILQ_HEAD(queue, vertex);
 
 static
 struct vertex *bfs(struct vertex *vertices, long nvertices,
@@ -29,20 +28,19 @@ struct vertex *bfs(struct vertex *vertices, long nvertices,
 		vertices++;
 	}
 
-	struct queue q;
-	STAILQ_INIT(&q);
-	STAILQ_INSERT_TAIL(&q, s, queue);
+	struct qnode q = { &q, &q };
+	insque(s, &q);
 	s->prev = s;
 
-	while (!STAILQ_EMPTY(&q)) {
-		struct vertex *v = STAILQ_FIRST(&q); 
-		STAILQ_REMOVE_HEAD(&q, queue);
+	while (q.next != &q) {
+		struct vertex *v = q.prev;
+		remque(v);
 		if (done(v, ctx)) {
 			return v;
 		}
 		for (struct vertex **u = v->next; *u; u++) {
 			if (!(*u)->prev) {
-				STAILQ_INSERT_TAIL(&q, *u, queue);
+				insque(*u, &q);
 				(*u)->prev = v;
 			}
 		}
