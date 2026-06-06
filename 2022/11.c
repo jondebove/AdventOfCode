@@ -4,19 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/queue.h>
 
 #include "utils.h"
 
-struct item {
-	long val;
-	STAILQ_ENTRY(item) queue;
-};
-
-STAILQ_HEAD(queue, item);
-
+#define NITEMS_MAX 32
 struct monkey {
-	struct queue items;
+	long items[NITEMS_MAX];
+	int nitems;
 	/* operation */
 	int op;
 	long val;
@@ -28,10 +22,6 @@ struct monkey {
 
 #define NMONKEYS_MAX 16
 static struct monkey monkeys[NMONKEYS_MAX];
-
-#define NITEMS_MAX (16*16)
-static struct item items[NITEMS_MAX];
-static struct item *item_new = items;
 
 static struct monkey *read(void)
 {
@@ -49,14 +39,11 @@ static struct monkey *read(void)
 
 	nscn = scanf(" Starting items%c", &c);
 	assert(nscn == 1);
-	STAILQ_INIT(&m->items);
 	do {
 		nscn = scanf(" %ld%c", &val, &c);
 		assert(nscn == 2);
-		struct item *it = item_new++;
-		assert(item_new - items <= NITEMS_MAX);
-		it->val = val;
-		STAILQ_INSERT_TAIL(&m->items, it, queue);
+		assert(m->nitems < NITEMS_MAX);
+		m->items[m->nitems++] = val;
 	} while (c == ',');
 
 	nscn = scanf(" Operation: new = old %c %7s", &c, s);
@@ -83,31 +70,31 @@ static struct monkey *read(void)
 
 static void inspect(struct monkey *m, long mod)
 {
-	for (struct item *it = STAILQ_FIRST(&m->items); it; it = STAILQ_FIRST(&m->items)) {
-		STAILQ_REMOVE_HEAD(&m->items, queue);
-
+	for (int i = 0; i < m->nitems; i++) {
 		/* operate */
-		long val = m->val == LONG_MIN ? it->val : m->val;
+		long val = m->val == LONG_MIN ? m->items[i] : m->val;
 		switch (m->op) {
-			case '+': it->val += val; break;
-			case '-': it->val -= val; break;
-			case '*': it->val *= val; break;
-			case '/': it->val /= val; break;
+			case '+': m->items[i] += val; break;
+			case '-': m->items[i] -= val; break;
+			case '*': m->items[i] *= val; break;
+			case '/': m->items[i] /= val; break;
 			default: assert(0);
 		}
 
 		if (mod) {
-			it->val %= mod;
+			m->items[i] %= mod;
 		} else {
-			it->val /= 3L;
+			m->items[i] /= 3L;
 		}
 
 		/* test */
-		int res = it->val % m->div == 0;
-		STAILQ_INSERT_TAIL(&m->next[res]->items, it, queue);
+		struct monkey *n = m->next[m->items[i] % m->div == 0];
+		assert(n->nitems < NITEMS_MAX);
+		n->items[n->nitems++] = m->items[i];
 
 		m->count++;
 	}
+	m->nitems = 0;
 }
 
 static void die(char const *progname, char const *errmesg)

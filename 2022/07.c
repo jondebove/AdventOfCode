@@ -1,25 +1,19 @@
-#define _POSIX_C_SOURCE 200809L
+#define _XOPEN_SOURCE 700
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/queue.h>
-
 #include "utils.h"
-
-struct dir;
-
-SLIST_HEAD(dir_list, dir);
 
 struct dir {
 	enum { DIR_DIR, DIR_FILE } type;
 	char *name;
 	struct dir *parent;
-	struct dir_list children;
+	struct dir *children;
+	struct dir *next;
 	long size;
-	SLIST_ENTRY(dir) dirs;
 };
 
 static
@@ -29,7 +23,7 @@ struct dir *dir_new(char const *name, struct dir *parent, long size)
 	d->type = size == 0 ? DIR_DIR : DIR_FILE;
 	d->name = strdup(name);
 	d->parent = parent;
-	SLIST_INIT(&d->children);
+	d->children = NULL;
 	d->size = size;
 	return d;
 }
@@ -38,9 +32,9 @@ static
 void dir_free(struct dir *d)
 {
 	if (d) {
-		struct dir *c = SLIST_FIRST(&d->children);
+		struct dir *c = d->children;
 		while (c) {
-			struct dir *cc = SLIST_NEXT(c, dirs);
+			struct dir *cc = c->next;
 			dir_free(c);
 			c = cc;
 		}
@@ -53,14 +47,15 @@ static
 struct dir *dir_searchchild(struct dir *d, char const *name, long size)
 {
 	struct dir *c;
-	SLIST_FOREACH(c, &d->children, dirs) {
+	for (c = d->children; c; c = c->next) {
 		if (strcmp(name, c->name) == 0) {
 			break;
 		}
 	}
 	if (!c) {
 		c = dir_new(name, d, size);
-		SLIST_INSERT_HEAD(&d->children, c, dirs);
+		c->next = d->children;
+		d->children = c;
 	} else {
 		c->size = size;
 	}
@@ -82,7 +77,7 @@ void dir_print(struct dir *d, int level)
 			d->name, type_name[d->type], d->size);
 
 	struct dir *c;
-	SLIST_FOREACH(c, &d->children, dirs) {
+	for (c = d->children; c; c = c->next) {
 		dir_print(c, level + 2);
 	}
 }
@@ -93,7 +88,7 @@ long dir_updatesize(struct dir *d)
 	if (d->type == DIR_DIR) {
 		d->size = 0;
 		struct dir *c;
-		SLIST_FOREACH(c, &d->children, dirs) {
+		for (c = d->children; c; c = c->next) {
 			d->size += dir_updatesize(c);
 		}
 	}
@@ -109,7 +104,7 @@ long dir_ans1(struct dir const *d, long max)
 			ans += d->size;
 		}
 		struct dir *c;
-		SLIST_FOREACH(c, &d->children, dirs) {
+		for (c = d->children; c; c = c->next) {
 			ans += dir_ans1(c, max);
 		}
 	}
@@ -124,7 +119,7 @@ long dir_ans2(struct dir const *d, long min, long max)
 			max = d->size;
 		}
 		struct dir *c;
-		SLIST_FOREACH(c, &d->children, dirs) {
+		for (c = d->children; c; c = c->next) {
 			max = dir_ans2(c, min, max);
 		}
 	}
