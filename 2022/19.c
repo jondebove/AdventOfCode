@@ -1,8 +1,8 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "hashtable.h"
 #include "utils.h"
 
 enum resource {
@@ -48,13 +48,14 @@ struct state {
 	int robots[END];
 	int resources[END];
 	long ans;
-	SHASH_ENTRY(state) ht;
 };
 
-static unsigned int state_hash(struct state const *s)
+#include <stdint.h>
+
+static uint64_t state_hash(struct state const *s)
 {
-	unsigned int h = 0;
-#define X(x) (h = h * 31U + (s->x))
+	uint64_t h = 0;
+#define X(x) (h = h * 31 + (s->x))
 	X(t);
 	for (enum resource r = GEODE; r >= ORE; r--) {
 		X(robots[r]);
@@ -64,27 +65,42 @@ static unsigned int state_hash(struct state const *s)
 	return h;
 }
 
-static int state_equal(struct state const *a, struct state const *b)
+static bool state_equal(struct state const *a, struct state const *b)
 {
-#define X(x) if (a->x != b->x) return 0
+#define X(x) if (a->x != b->x) return false
 	X(t);
 	for (enum resource r = GEODE; r >= ORE; r--) {
 		X(robots[r]);
 		X(resources[r]);
 	}
-	return 1;
+	return true;
 #undef X
 }
 
-/* memoization */
-SHASH_TABLE(ht_state, state);
+static bool state_exist(struct state const *s)
+{
+	return s->t != 0;
+}
 
 struct memo_state {
-	struct ht_state *cache;
-	struct state *pool;
+	struct state *cache;
+	int shift;
 	long cap;
 	long len;
 };
+
+static struct state *search(struct memo_state *m, struct state const *s)
+{
+	struct state *sp = NULL;
+	uint64_t const h = state_hash(s) * 1000000008000000001U;
+	uint64_t const n = ((uint64_t)1 << m->shift) - 1;
+	uint64_t i, j;
+	for (i = h >> (64 - m->shift), j = 1; ; i = (i + j) & n, j++) {
+		sp = &m->cache[i];
+		if (!state_exist(sp) || state_equal(s, sp)) break;
+	}
+	return sp;
+}
 
 static void dfs(struct blueprint const *b, struct state *s, struct memo_state *m)
 {
@@ -107,13 +123,10 @@ static void dfs(struct blueprint const *b, struct state *s, struct memo_state *m
 	}
 
 	/* memo_find */
-	unsigned int h = state_hash(s);
-	struct state *sp;
-	SHASH_SEARCH_FOREACH(sp, h, m->cache, ht) {
-		if (state_equal(s, sp)) {
-			s->ans = sp->ans;
-			return;
-		}
+	struct state *sp = search(m, s);
+	if (state_exist(sp)) {
+		s->ans = sp->ans;
+		return;
 	}
 
 	/* loop on robots */
@@ -149,28 +162,29 @@ next_robot:
 	}
 
 	/* memo_enter */
-	assert(m->len <= m->cap);
-	sp = &m->pool[m->len++];
+	assert(m->len < m->cap);
+	m->len++;
 	*sp = *s;
-	SHASH_INSERT(m->cache, sp, h, ht);
 }
 
 static long ngeodes_max(struct blueprint const *b, int t, int shift)
 {
+	assert(shift > 0);
+	long n = 1L << shift;
+
 	/* memo_create */
-	struct memo_state m;
-	m.cache = xrealloc(NULL, SHASH_TABLE_SIZE(ht_state, shift));
-	SHASH_INIT(m.cache, shift);
-	m.len = 0;
-	m.cap = SHASH_SIZE(m.cache);
-	m.pool = xrealloc(NULL, m.cap * sizeof(*m.pool));
+	struct memo_state m = {
+		.len = 0,
+		.cap = n / 4 * 3,
+		.shift = shift,
+		.cache = calloc(n, sizeof(*m.cache)),
+	};
 
 	struct state s = { .t = t, .robots = { [ORE] = 1 } };
 	dfs(b, &s, &m);
 
 	/* memo_destroy */
 	free(m.cache);
-	free(m.pool);
 
 	return s.ans;
 }

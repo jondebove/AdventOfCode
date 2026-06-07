@@ -1,40 +1,42 @@
 #include <assert.h>
+#include <search.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "hashtable.h"
 #include "utils.h"
 
 struct vec2 {
 	int x;
 	int y;
 	unsigned int flags;
-	SHASH_ENTRY(vec2) vs;
 };
 
-void move(struct vec2 *pos, struct vec2 dir)
+static int vec2_cmp(void const *a, void const *b)
+{
+	struct vec2 const *va = a;
+	struct vec2 const *vb = b;
+	int cmp = va->x - vb->x;
+	if (cmp == 0) cmp = va->y - vb->y;
+	return cmp;
+}
+
+static void move(struct vec2 *pos, struct vec2 dir)
 {
 	pos->x += dir.x;
 	pos->y += dir.y;
 }
 
-SHASH_TABLE(vec2_set, vec2);
-
-int enter(struct vec2_set *set, struct vec2 pos)
+static int search(tnode *set, struct vec2 pos)
 {
-	unsigned int h = pos.x + pos.y * 31;
-	struct vec2 *v;
-	SHASH_SEARCH_FOREACH(v, h, set, vs) {
-		if (v->x == pos.x && v->y == pos.y) {
-			break;
-		}
-	}
-	if (!v) {
-		v = xrealloc(NULL, sizeof(*v));
-		*v = pos;
-		SHASH_INSERT(set, v, h, vs);
-		return 1;
+	struct vec2 *v = xrealloc(NULL, sizeof(*v));
+	v->x = pos.x;
+	v->y = pos.y;
+	v->flags = 0;
+	struct vec2 **vp = tsearch(v, set, vec2_cmp);
+	if ((*vp)->flags) { /* found */
+		free(v);
+		v = *vp;
 	}
 	if (v->flags & pos.flags) {
 		return 0;
@@ -54,10 +56,9 @@ int main(void)
 		knots[i].flags = (1U << i);
 	}
 
-	struct vec2_set *set = xrealloc(NULL, SHASH_TABLE_SIZE(vec2_set, 12));
-	SHASH_INIT(set, 12);
-	ans1 += enter(set, knots[1]);
-	ans2 += enter(set, knots[9]);
+	tnode *set = NULL;
+	ans1 += search(&set, knots[1]);
+	ans2 += search(&set, knots[9]);
 
 	char s[8];
 	int n;
@@ -88,22 +89,17 @@ int main(void)
 				};
 				move(&knots[i], d);
 				if (i == 1) {
-					ans1 += enter(set, knots[i]);
+					ans1 += search(&set, knots[i]);
 				}
 				if (i == 9) {
-					ans2 += enter(set, knots[i]);
+					ans2 += search(&set, knots[i]);
 				}
 			}
 		}
 	}
 
-	struct vec2 *v, *vn;
-	SHASH_FOREACH_SAFE(v, set, vs, vn) {
-		free(v);
-	}
-	free(set);
+	tdestroy(&set, free);
 
 	printf("%ld %ld\n", ans1, ans2);
-
 	return 0;
 }

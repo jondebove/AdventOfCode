@@ -50,6 +50,10 @@ struct qnode {
 	void *prev;
 };
 
+/* tree */
+typedef void tnode;
+void tdestroy(tnode **rootp, void (*free_key)(void *key));
+
 /* arith */
 long gcd(long x, long y);
 long vgcd(long x, ...);

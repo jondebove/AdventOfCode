@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
+#include <search.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
@@ -81,6 +82,23 @@ char *grid_at(struct grid const *g, long i, long j)
 {
 	return i >= 0 && i < g->nrow && j >= 0 && j < g->ncol ?
 		&g->data[j + (g->ncol + 1) * i] : NULL;
+}
+
+/* tree */
+static int tdestroy_cmp(void const *a, void const *b)
+{
+	(void)a;
+	(void)b;
+	return 0;
+}
+
+void tdestroy(tnode **rootp, void (*free_key)(void *key))
+{
+	while (*rootp) {
+		void *key = **(void ***)rootp;
+		tdelete(key, rootp, tdestroy_cmp);
+		if (free_key) free_key(key);
+	}
 }
 
 /* arith */
