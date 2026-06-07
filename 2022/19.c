@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -44,18 +45,16 @@ static int blueprint_read(struct blueprint *b)
 }
 
 struct state {
-	int t;
-	int robots[END];
-	int resources[END];
+	int8_t t;
+	int8_t robots[END];
+	int8_t resources[END];
 	long ans;
 };
-
-#include <stdint.h>
 
 static uint64_t state_hash(struct state const *s)
 {
 	uint64_t h = 0;
-#define X(x) (h = h * 31 + (s->x))
+#define X(x) (h = (h << 7) + (uint8_t)(s->x))
 	X(t);
 	for (enum resource r = GEODE; r >= ORE; r--) {
 		X(robots[r]);
@@ -92,10 +91,10 @@ struct memo_state {
 static struct state *search(struct memo_state *m, struct state const *s)
 {
 	struct state *sp = NULL;
-	uint64_t const h = state_hash(s) * 1000000008000000001U;
 	uint64_t const n = ((uint64_t)1 << m->shift) - 1;
 	uint64_t i, j;
-	for (i = h >> (64 - m->shift), j = 1; ; i = (i + j) & n, j++) {
+	for (i = (state_hash(s) * 1000000008000000001U) >> (64 - m->shift), j = 1;;
+			i = (i + j) & n, j++) {
 		sp = &m->cache[i];
 		if (!state_exist(sp) || state_equal(s, sp)) break;
 	}
@@ -194,10 +193,8 @@ int main(void)
 	long ans1 = 0;
 	long ans2 = 1;
 
-	/* read input */
 	struct blueprint b;
 	while (!blueprint_read(&b)) {
-		//printf("%d\n", b.id);
 		ans1 += b.id * ngeodes_max(&b, 24, 20);
 
 		if (b.id <= 3) {
@@ -206,6 +203,5 @@ int main(void)
 	}
 
 	printf("%ld %ld\n", ans1, ans2);
-
 	return 0;
 }

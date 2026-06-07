@@ -9,8 +9,6 @@ all: $(BINS)
 
 $(BINS): utils.o utils.h
 
-24: hashtable.h
-
 .PHONY: clean
 clean:
 	-rm -f $(BINS) *.o

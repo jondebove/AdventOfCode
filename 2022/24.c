@@ -1,12 +1,13 @@
+#define _XOPEN_SOURCE 700
 #include <assert.h>
+#include <search.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/queue.h>
 
-#include "hashtable.h"
 #include "utils.h"
 
 enum dir { N, S, W, E, Z };
@@ -25,80 +26,83 @@ static struct vec2 const dirs[] = {
 };
 
 struct vertex {
+	struct qnode queue;
+	struct vertex *next[5 + 1];
+	struct vertex *prev;
+
 	int row;
 	int col;
 	int t;
-
-	SHASH_ENTRY(vertex) hash;
-	STAILQ_ENTRY(vertex) queue;
-	struct vertex *next[5 + 1];
-	struct vertex *prev;
 };
 
 struct graph {
-	unsigned int nvertices;
 	struct vertex *vertices;
-	SHASH_TABLE(hash, vertex) *htab;
+	long cap;
+	long len;
+	int shift;
 };
 
-void graph_create(struct graph *g, int shift)
+static void graph_create(struct graph *g, int shift)
 {
-	g->htab = xrealloc(NULL, SHASH_TABLE_SIZE(hash, shift));
-	SHASH_INIT(g->htab, shift);
+	assert(shift > 0);
+	long n = 1L << shift;
 
-	g->vertices = xrealloc(NULL, sizeof(*g->vertices) * SHASH_SIZE(g->htab));
-	memset(g->vertices, 0, sizeof(*g->vertices) * SHASH_SIZE(g->htab));
-
-	g->nvertices = 0;
+	g->len = 0;
+	g->cap = n / 4 * 3;
+	g->shift = shift;
+	g->vertices = calloc(n, sizeof(*g->vertices));
+	assert(g->vertices);
 }
 
-void graph_destroy(struct graph *g)
+static void graph_destroy(struct graph *g)
 {
 	free(g->vertices);
-	free(g->htab);
 }
 
-struct vertex *graph_enter(struct graph *g, int row, int col, int t)
+static struct vertex *graph_search(struct graph *g, int row, int col, int t)
 {
-	unsigned int h = row + 50 * (col + 150 * t);
-	struct vertex *vp;
-	SHASH_SEARCH_FOREACH(vp, h, g->htab, hash) {
-		if (vp->row == row && vp->col == col && vp->t == t) {
+	uint64_t h = (uint64_t)row << 32 | (uint64_t)col << 16 | (uint64_t)t;
+	uint64_t const m = ((uint64_t)1 << g->shift) - 1;
+	uint64_t i, j;
+	struct vertex *v = NULL;
+	for (i = (h * 1000000008000000001U) >> (64 - g->shift), j = 1;;
+			i = (i + j) & m, j++) {
+		v = &g->vertices[i];
+		if (!v->prev) {
+			assert(g->len < g->cap);
+			g->len++;
+			v->row = row;
+			v->col = col;
+			v->t = t;
+			v->prev = (void *)0x1;
+			break;
+		} else if (v->row == row && v->col == col && v->t == t) {
 			break;
 		}
 	}
-	if (!vp) {
-		assert(g->nvertices < SHASH_SIZE(g->htab));
-		vp = &g->vertices[g->nvertices++];
-		vp->row = row;
-		vp->col = col;
-		vp->t = t;
-		SHASH_INSERT(g->htab, vp, h, hash);
-	}
-	return vp;
+	return v;
 }
 
 static struct vertex *bfs(struct graph *g, struct vertex *s,
 		bool (*done)(struct vertex *v, void *ctx), void *ctx)
 {
-	for (unsigned int i = g->nvertices; i;) {
-		g->vertices[--i].prev = NULL;
+	for (long i = 1L << g->shift; i--; ) {
+		g->vertices[i].prev = NULL;
 	}
 
-	STAILQ_HEAD(, vertex) q;
-	STAILQ_INIT(&q);
-	STAILQ_INSERT_TAIL(&q, s, queue);
+	struct qnode q = { &q, &q };
+	insque(s, &q);
 	s->prev = s;
 
-	while (!STAILQ_EMPTY(&q)) {
-		struct vertex *v = STAILQ_FIRST(&q); 
-		STAILQ_REMOVE_HEAD(&q, queue);
+	while (q.prev != &q) {
+		struct vertex *v = q.prev;
+		remque(v);
 		if (done(v, ctx)) {
 			return v;
 		}
 		for (struct vertex **u = v->next; *u; u++) {
 			if (!(*u)->prev) {
-				STAILQ_INSERT_TAIL(&q, *u, queue);
+				insque(*u, &q);
 				(*u)->prev = v;
 			}
 		}
@@ -176,7 +180,7 @@ int main(void)
 	struct vertex *s = NULL;
 	for (int j = 0; j < g.ncol; j++) {
 		if (!*grid_at(&g, 0, j)) {
-			s = graph_enter(&gr, 0, j, 0);
+			s = graph_search(&gr, 0, j, 0);
 			break;
 		}
 	}
@@ -191,14 +195,14 @@ int main(void)
 				if (*grid_at(&g, i, j)) {
 					continue;
 				}
-				struct vertex *v = graph_enter(&gr, i, j, t);
+				struct vertex *v = graph_search(&gr, i, j, t);
 				int k = 0;
 				for (int d = N; d <= Z; d++) {
 					int in = i + dirs[d].row;
 					int jn = j + dirs[d].col;
 					char *c = grid_at(&gn, in, jn);
 					if (c && !*c) {
-						v->next[k++] = graph_enter(&gr, in, jn, tn);
+						v->next[k++] = graph_search(&gr, in, jn, tn);
 					}
 				}
 				assert(k < COUNTOF(v->next));
@@ -235,6 +239,5 @@ int main(void)
 	buffer_destroy(&b);
 
 	printf("%ld %ld\n", ans1, ans2);
-
 	return 0;
 }
