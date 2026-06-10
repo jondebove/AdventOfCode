@@ -29,20 +29,18 @@ static void move(struct vec2 *pos, struct vec2 dir)
 
 static int search(tnode *set, struct vec2 pos)
 {
-	struct vec2 *v = xrealloc(NULL, sizeof(*v));
-	v->x = pos.x;
-	v->y = pos.y;
-	v->flags = 0;
-	struct vec2 **vp = tsearch(v, set, vec2_cmp);
-	if ((*vp)->flags) { /* found */
-		free(v);
-		v = *vp;
-	}
-	if (v->flags & pos.flags) {
+	struct vec2 **vp = tsearch(&pos, set, vec2_cmp);
+	struct vec2 *v = *vp;
+	if (v == &pos) {
+		*vp = xrealloc(NULL, sizeof(**vp));
+		**vp = pos;
+		return 1;
+	} else if (!(v->flags & pos.flags)) {
+		v->flags |= pos.flags;
+		return 1;
+	} else {
 		return 0;
 	}
-	v->flags |= pos.flags;
-	return 1;
 }
 
 int main(void)
