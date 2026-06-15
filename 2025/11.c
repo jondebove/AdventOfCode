@@ -59,6 +59,7 @@ int main(void)
 	long ans2 = 0;
 
 	struct dev *devs = calloc(DEVS_CAP, sizeof(*devs));
+	assert(devs);
 	int ndevs = 0;
 
 	/* Parse. */

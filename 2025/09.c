@@ -34,6 +34,7 @@ int main(void)
 
 	/* Read. */
 	struct point *ps = calloc(1024, sizeof(*ps));
+	assert(ps);
 	int np = 0;
 	while (scanf(" %d,%d ", &ps[np].x, &ps[np].y) == 2) {
 		np++;

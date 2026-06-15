@@ -90,6 +90,7 @@ int main(void)
 
 	/* Boxes. */
 	struct box *bs = calloc(BS_MAX, sizeof(*bs));
+	assert(bs);
 	struct box *b = bs;
 	while (scanf(" %ld,%ld,%ld ", &b->x, &b->y, &b->z) == 3) {
 		b->prev = b;
@@ -102,6 +103,7 @@ int main(void)
 
 	/* Connections. */
 	struct con *cs = calloc(CS_MAX, sizeof(*cs));
+	assert(cs);
 	int i, j;
 	int ncs = 0;
 	for (i = 0; i < nbs; i++) {
