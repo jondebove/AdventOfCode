@@ -27,12 +27,6 @@ void buffer_create(struct buffer *b);
 void buffer_destroy(struct buffer *b);
 int buffer_getdelim(struct buffer *b, int delim, FILE *stream);
 
-/* slice */
-struct slice {
-	char *str;
-	long len;
-};
-
 /* grid */
 struct grid {
 	char *data;
@@ -52,7 +46,7 @@ struct qnode {
 
 /* tree */
 typedef void tnode;
-void tdestroy(tnode **rootp, void (*free_key)(void *key));
+void tdestroy(tnode *root, void (*free_key)(void *key));
 
 /* arith */
 long gcd(long x, long y);

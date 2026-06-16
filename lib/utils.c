@@ -92,11 +92,11 @@ static int tdestroy_cmp(void const *a, void const *b)
 	return 0;
 }
 
-void tdestroy(tnode **rootp, void (*free_key)(void *key))
+void tdestroy(tnode *root, void (*free_key)(void *key))
 {
-	while (*rootp) {
-		void *key = **(void ***)rootp;
-		tdelete(key, rootp, tdestroy_cmp);
+	while (root) {
+		void *key = *(void **)root;
+		tdelete(key, &root, tdestroy_cmp);
 		if (free_key) free_key(key);
 	}
 }

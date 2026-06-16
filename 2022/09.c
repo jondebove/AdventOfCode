@@ -96,7 +96,7 @@ int main(void)
 		}
 	}
 
-	tdestroy(&set, free);
+	tdestroy(set, free);
 
 	printf("%ld %ld\n", ans1, ans2);
 	return 0;
