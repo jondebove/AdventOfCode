@@ -97,7 +97,6 @@ static void dfs(struct vertex *v, long t, long *scores, unsigned long key, long 
 
 static long *walk(struct vertex *v, long t, long *scores, long size)
 {
-	scores = xrealloc(scores, size * sizeof(*scores));
 	memset(scores, 0, size * sizeof(*scores));
 	dfs(v, t, scores, 0, 0);
 	return scores;
@@ -164,7 +163,8 @@ int main(void)
 
 	struct vertex *aa = vertex_search("AA", vertices, &nvertices);
 	unsigned long const n = 1UL << idx;
-	long *scores = NULL;
+	long *scores = calloc(n, sizeof(*scores));
+	assert(scores);
 
 	/* part 1 */
 	scores = walk(aa, 30, scores, n);

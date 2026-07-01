@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "utils.h"
 
@@ -22,8 +21,8 @@ int main(void)
 	grid_init(&g, b.str, b.len);
 
 	/* part 1 */
-	bool *visibility = xrealloc(NULL, b.len * sizeof(*visibility));
-	memset(visibility, 0, b.len * sizeof(*visibility));
+	bool *visibility = calloc(b.len, sizeof(*visibility));
+	assert(visibility);
 
 	for (long i = 0; i < g.nrow; i++) {
 		/* L -> R */

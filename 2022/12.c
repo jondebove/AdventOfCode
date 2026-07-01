@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "utils.h"
 
@@ -76,8 +75,8 @@ int main(void)
 
 	/* make graph */
 	long nvertices = g.nrow * g.ncol;
-	struct vertex *vertices = xrealloc(NULL, sizeof(*vertices) * nvertices);
-	memset(vertices, 0, sizeof(*vertices) * nvertices);
+	struct vertex *vertices = calloc(nvertices, sizeof(*vertices));
+	assert(vertices);
 
 	/* find endpoints */
 	struct vertex *s = NULL;

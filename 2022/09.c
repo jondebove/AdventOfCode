@@ -32,7 +32,8 @@ static int search(tnode *set, struct vec2 pos)
 	struct vec2 **vp = tsearch(&pos, set, vec2_cmp);
 	struct vec2 *v = *vp;
 	if (v == &pos) {
-		*vp = xrealloc(NULL, sizeof(**vp));
+		*vp = calloc(1, sizeof(**vp));
+		assert(*vp);
 		**vp = pos;
 		return 1;
 	} else if (!(v->flags & pos.flags)) {

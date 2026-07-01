@@ -22,7 +22,8 @@ struct range {
 
 static struct range *range_new(long min, long max)
 {
-	struct range *r = xrealloc(NULL, sizeof(*r));
+	struct range *r = calloc(1, sizeof(*r));
+	assert(r);
 	r->min = min;
 	r->max = max;
 	return r;

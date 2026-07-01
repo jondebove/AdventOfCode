@@ -1,15 +1,12 @@
 .POSIX:
 .SUFFIXES:
 
-CFLAGS = -O2 -Wall -Wextra -Wpedantic #-g -pg
+CFLAGS = -O2 -Wall -Wextra -pedantic #-g -pg
 BINS = 01 02 03 04 05 06 07 08 09 10 11
 
 all: $(BINS)
 
-04: 04.c
-06: 06.c
-04 06: utils.o
-	$(CC) $(CFLAGS) -o $@ $@.c utils.o -lm
+$(BINS): utils.o utils.h
 
 .PHONY: clean
 clean:
@@ -17,7 +14,7 @@ clean:
 
 .SUFFIXES: .c .o
 .c:
-	$(CC) $(CFLAGS) -o $@ $< -lm
+	$(CC) $(CFLAGS) -o $@ $< utils.o -lm
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<

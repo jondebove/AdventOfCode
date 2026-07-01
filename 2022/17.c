@@ -144,7 +144,8 @@ int main(void)
 	/* part 2: find cycle */
 	long const nrow = 15;
 	long const size = (g.ncol + 1) * nrow;
-	char *ref = xrealloc(NULL, size);
+	char *ref = calloc(size, sizeof(*ref));
+	assert(ref);
 	memcpy(ref, grid_at(&g, ymax - nrow, 0), size);
 	do {
 		rock_move(&g, &j, &ymax);

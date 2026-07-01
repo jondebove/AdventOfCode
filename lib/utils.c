@@ -10,18 +10,6 @@
 
 #include "utils.h"
 
-size_t nalloc = 0;
-void *xrealloc(void *ptr, size_t size)
-{
-	void *x = realloc(ptr, size);
-	if (!x) {
-		fprintf(stderr, "%s\n", strerror(ENOMEM));
-		exit(1);
-	}
-	nalloc++;
-	return x;
-}
-
 void buffer_create(struct buffer *b)
 {
 	b->str = NULL;
@@ -54,7 +42,7 @@ int buffer_getdelim(struct buffer *b, int delim, FILE *stream)
 void grid_create(struct grid *g, long nrow, long ncol, int fill)
 {
 	long const size = nrow * (ncol + 1);
-	g->data = xrealloc(NULL, size);
+	g->data = malloc(size);
 	memset(g->data, fill, size);
 	for (long i = ncol; i < size; i += ncol + 1) {
 		g->data[i] = '\n';

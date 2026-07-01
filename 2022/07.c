@@ -19,7 +19,8 @@ struct dir {
 static
 struct dir *dir_new(char const *name, struct dir *parent, long size)
 {
-	struct dir *d = xrealloc(NULL, sizeof(*d));
+	struct dir *d = calloc(1, sizeof(*d));
+	assert(d);
 	d->type = size == 0 ? DIR_DIR : DIR_FILE;
 	d->name = strdup(name);
 	d->parent = parent;

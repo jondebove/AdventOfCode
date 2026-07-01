@@ -13,10 +13,6 @@
 #define CONTAINEROF(ptr, type, field) \
 	((type *)((char *)(ptr) - offsetof(type, field)))
 
-/* xalloc */
-extern size_t nalloc;
-void *xrealloc(void *ptr, size_t size);
-
 /* buffer */
 struct buffer {
 	char *str;
